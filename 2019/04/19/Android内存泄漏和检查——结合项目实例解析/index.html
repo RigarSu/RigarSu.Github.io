@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="内存泄漏,">
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="前言在我们版本迭代的过程中，内存泄漏是我们时刻关注，但又经常忽略的烦人问题。几乎每个大版本迭代都会出现新的内存泄漏点，在版本开发阶段经常被忽略，直到灰度才被发现，内存泄漏导致APP内存紧张，导致整体卡顿，OOM崩溃，ANR等问题，这里总结了一些内存泄漏的常见点和检查方法。 一、什么是内存泄漏？ 内存的自动回收java中，对象是通过引用与其关联的，如果一个对象没有任何引用，那么这个对象就被认为是”无">
+<meta name="keywords" content="内存泄漏">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android内存泄漏和检查——结合项目实例解析">
+<meta property="og:url" content="http://yoursite.com/2019/04/19/Android内存泄漏和检查——结合项目实例解析/index.html">
+<meta property="og:site_name" content="不忘初心">
+<meta property="og:description" content="前言在我们版本迭代的过程中，内存泄漏是我们时刻关注，但又经常忽略的烦人问题。几乎每个大版本迭代都会出现新的内存泄漏点，在版本开发阶段经常被忽略，直到灰度才被发现，内存泄漏导致APP内存紧张，导致整体卡顿，OOM崩溃，ANR等问题，这里总结了一些内存泄漏的常见点和检查方法。 一、什么是内存泄漏？ 内存的自动回收java中，对象是通过引用与其关联的，如果一个对象没有任何引用，那么这个对象就被认为是”无">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://yoursite.com/2019/04/19/Android内存泄漏和检查——结合项目实例解析/初始界面.png">
+<meta property="og:image" content="http://yoursite.com/2019/04/19/Android内存泄漏和检查——结合项目实例解析/Histogram.png">
+<meta property="og:image" content="http://yoursite.com/2019/04/19/Android内存泄漏和检查——结合项目实例解析/引用关系与支配树.png">
+<meta property="og:image" content="http://yoursite.com/2019/04/19/Android内存泄漏和检查——结合项目实例解析/实例一，周星入口泄漏.png">
+<meta property="og:image" content="http://yoursite.com/2019/04/19/Android内存泄漏和检查——结合项目实例解析/实例二，支配树.png">
+<meta property="og:updated_time" content="2019-04-22T04:43:26.099Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Android内存泄漏和检查——结合项目实例解析">
+<meta name="twitter:description" content="前言在我们版本迭代的过程中，内存泄漏是我们时刻关注，但又经常忽略的烦人问题。几乎每个大版本迭代都会出现新的内存泄漏点，在版本开发阶段经常被忽略，直到灰度才被发现，内存泄漏导致APP内存紧张，导致整体卡顿，OOM崩溃，ANR等问题，这里总结了一些内存泄漏的常见点和检查方法。 一、什么是内存泄漏？ 内存的自动回收java中，对象是通过引用与其关联的，如果一个对象没有任何引用，那么这个对象就被认为是”无">
+<meta name="twitter:image" content="http://yoursite.com/2019/04/19/Android内存泄漏和检查——结合项目实例解析/初始界面.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2019/04/19/Android内存泄漏和检查——结合项目实例解析/">
+
+
+
+
+
+  <title>Android内存泄漏和检查——结合项目实例解析 | 不忘初心</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">不忘初心</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/04/19/Android内存泄漏和检查——结合项目实例解析/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Rigar Su">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="不忘初心">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Android内存泄漏和检查——结合项目实例解析</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-04-19T21:28:31+08:00">
+                2019-04-19
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/性能优化/" itemprop="url" rel="index">
+                    <span itemprop="name">性能优化</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>在我们版本迭代的过程中，内存泄漏是我们时刻关注，但又经常忽略的烦人问题。几乎每个大版本迭代都会出现新的内存泄漏点，在版本开发阶段经常被忽略，直到灰度才被发现，内存泄漏导致APP内存紧张，导致整体卡顿，OOM崩溃，ANR等问题，这里总结了一些内存泄漏的常见点和检查方法。</p>
+<h3 id="一、什么是内存泄漏？"><a href="#一、什么是内存泄漏？" class="headerlink" title="一、什么是内存泄漏？"></a>一、什么是内存泄漏？</h3><ol>
+<li>内存的自动回收<br>java中，对象是通过引用与其关联的，如果一个对象没有任何引用，那么这个对象就被认为是”无用“的，java的垃圾回收机制，即是使用引用分析法，对象引用类似一个有向图，选定一系列的索引起点，若某个对象与其均无可达路径，则该对象会被标记为回收对象，在垃圾回收时自动回收。</li>
+<li>java内存泄漏<br>如果程序中存在一些对象，这些对象有两个特征，一、在对象引用有向图中，这些对象存在可达路径；二、应用程序不再使用这些对象；那么这些对象则无法被垃圾回收器回收，且不会再用到，这即是java中的内存泄漏。</li>
+</ol>
+<a id="more"></a>
+<h3 id="二、Android常见的内存泄漏"><a href="#二、Android常见的内存泄漏" class="headerlink" title="二、Android常见的内存泄漏"></a>二、Android常见的内存泄漏</h3><ol>
+<li>Context被持有造成View泄漏，一般是Context被View以外的组件持有引用，如Model，工作线程等，导致在界面销毁是Context仍被引用，从而造成泄漏。如：<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">public class AppModel &#123;</span><br><span class="line">    private static AppModel instance;</span><br><span class="line">    private Context context;</span><br><span class="line">    private AppModel() &#123;</span><br><span class="line">    &#125;</span><br><span class="line">    public static AppModel getInstance(Context context) &#123;</span><br><span class="line">        if (instance != null) &#123;</span><br><span class="line">            instance = new AppModel(context);</span><br><span class="line">        &#125;</span><br><span class="line">        return instance;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    public doSomething(Context ctx) &#123;</span><br><span class="line">        context = ctx;</span><br><span class="line">        //do something</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>解决方案：在规范开发中并不常见，应该在团队中规范开发规则，Context应该尽量不在界面以外的组件使用，必要是可以用Application的Context，或者其他解决方案。</p>
+<ol start="2">
+<li>非静态内部类持有外部类引用<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">private Handler mHandler = new Handler() &#123;</span><br><span class="line">    @Override</span><br><span class="line">    public void handleMessage(Message msg) &#123;</span><br><span class="line">        super.handleMessage(msg);</span><br><span class="line">        switch (msg.what) &#123;</span><br><span class="line">            case SHOW_DIALOG:</span><br><span class="line">                showPleaseDialog();</span><br><span class="line">                break;</span><br><span class="line">            case DISMISS_DIALOG:</span><br><span class="line">                dismissDialog();</span><br><span class="line">                break;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>如果这样写，lint会检查并提示：Handler classes should be static or leaks might occur。<br>Handler是非静态内部类，会持有外部类的引用，Handler如果是跟主线程的Looper绑定，那么如果界面销毁时，发到主线程的消息，仍未被处理，那么该消息持有Handler的引用，而Handler持有界面引用，从而导致泄漏。<br>解决方案：建议不在View层做业务处理，View只做刷新职责，在ViewModel处理好相关业务，并通过LiveData或广播等通知View刷新，保证View层不泄漏，ViewModel层使用静态内部类，或者使用其他更优雅的解决方案。</p>
+<ol start="3">
+<li>匿名内部类持有外部类的引用。<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">mHandler.postDelayed(new Runnable() &#123;</span><br><span class="line">    @Override</span><br><span class="line">    public void run() &#123;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;, 5000);</span><br><span class="line">new Thread(new Runnable() &#123;</span><br><span class="line">    @Override</span><br><span class="line">    public void run() &#123;</span><br><span class="line">        SystemClock.sleep(10000);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;).start();</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>各种Runnable、Callback等，匿名内部类写法比较简洁，也带来泄漏的隐患。内部类的写法不跨越生命周期的话，是没有问题的，如果在更长的生命周期的对象中使用，则发生泄漏。异步线程等全局对象持有匿名内部类，而匿名内部类持有外部类引用，造成泄漏。<br>解决方案：同2。同时，如果有异步任务，大部分场景需要在界面销毁时停止，可以统一使用带生命周期异步任务，在界面销毁时终止任务。可以方便的使用界面的Lifecycle监听界面状态。</p>
+<ol start="4">
+<li>监听器没有注销导致的内存泄漏</li>
+</ol>
+<p>比较常见的内存泄漏点，开发者在无意中经常漏掉注销监听，导致界面等在全局监听器中无法释放，从而内存泄漏。<br>解决方案：在界面带有生命周期等控件中，通过Lifecycle监听其状态变化，在销毁时自动注销监听器。或者在父类统一处理注册和注销监听器。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">fun Lifecycle.subScribe(subscribBlock: () -&gt; Unit, unSubscribBlock: () -&gt; Unit) &#123;</span><br><span class="line">    subscribBlock()</span><br><span class="line">    addObserver(object : LifecycleObserver &#123;</span><br><span class="line">        @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)</span><br><span class="line">        fun destroy() &#123;</span><br><span class="line">            unSubscribBlock()</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h3 id="三、内存泄漏的检查"><a href="#三、内存泄漏的检查" class="headerlink" title="三、内存泄漏的检查"></a>三、内存泄漏的检查</h3><ol>
+<li>LeakCanary</li>
+</ol>
+<p>Github: <a href="https://github.com/square/leakcanary" target="_blank" rel="noopener">LeakCanary</a><br>LeakCanary will automatically show a notification when an activity or support fragment memory leak is detected in your debug build.<br>众所周知，检查内存泄漏的常用工具，使用也很简单，原理是在Application注册并监听Activity的生命周期，以此来检查见面的内存泄漏，LeakCanary可以检查到一些明显的内存泄漏点，但一些非界面组件，或者隐晦的泄漏点难以发现，因此要结合更加细致的工具检查。</p>
+<ol start="2">
+<li>Android Studio自带的工具Profile</li>
+</ol>
+<p>官方文档：<a href="https://developer.android.com/studio/profile/memory-profiler" target="_blank" rel="noopener">使用 Memory Profiler 查看 Java 堆和内存分配</a><br>Memory Profile是个方便易用的工具，具体使用方法文档中已经详细描述了。但是它缺少可以辅助分析的工具（而且一旦将内存dump下来开始分析，AS就疯狂卡顿甚至还ANR，不知道是不是我的问题），建议在操作完需要检查的程序之后，GC并Dump下内存，保存后用Memoroy Analyzer分析。</p>
+<h3 id="四、如何使用Memory-Analyzer-Tool（MAT）检查内存？"><a href="#四、如何使用Memory-Analyzer-Tool（MAT）检查内存？" class="headerlink" title="四、如何使用Memory Analyzer Tool（MAT）检查内存？"></a>四、如何使用Memory Analyzer Tool（MAT）检查内存？</h3><ol>
+<li>将Profile下载下来的hprof文件使用<strong>android_sdk/platform-tools</strong>的工具专为标准的Java SE hprof文件：<strong>hprof-conv heap-original.hprof heap-converted.hprof</strong></li>
+</ol>
+<ol start="2">
+<li>此时可以用MAT打开该文件，初始界面如下：<img src="/2019/04/19/Android内存泄漏和检查——结合项目实例解析/初始界面.png" title="初始界面">
+可以看到有很多Action可以选择，每个Action都有相应的说明，这里简单介绍常用的几种：<br>Action：<br>Histogram：应用所分配的对象和实例数<br>Dominator Tree: 依赖树，后面再说<br>Top Consumers: 内存占用最大的对象<br>Duplicate Classes: 重复加载的类<br>Reports:<br>Leak Suspects：可能的内存泄漏点<br>Top Components: 堆占比大于1%的组件<br>Step By Step:<br>Component Report: 一步步教你分析的教程</li>
+</ol>
+<ol start="3">
+<li>点击Histogram，展示所有对象和实例，第一行支持正则表达式的搜索，其中有几个概念需要认识一下：</li>
+</ol>
+<p>Objects: 顾名思义，实例数量<br>Shallow Heap: 一个对象结构占用的内存大小（对象本身占用的内存，不包括其内部引用对象大小）<br>Retained Heap: 一个对象所能访问到的所有对象的浅堆之和，即是对象被回收后，能释放的真实内存空间<br>如下图：<br>（1）可以简单筛选，看看Activity的存活情况，并可以按以上三个属性升降排序，如果该界面已经销毁一段时间，仍然常驻内存，则可能发生了泄漏。以此类推，你可以有一些猜想对象，并在此检查是否符合预期。<br>（2）如果发生内存泄漏，可以右键该对象，Merge Shortest Paths to GC Roots，找到它的强引用链（其他引用该对象会被GC清理），分析是哪里对它有引用造成的泄漏。<br>（3）这里右键还可以查看对象的List Object -&gt; with outgonging references，当前对象引用的对象，以及with ingonging references引用该对象的对象。等等该对象相关的属性和引用。<br>（4）Window导航栏还有一个Inspector可以查看选择对象的各种属性，很强大，这里不展开。<br>（5）导航栏Thread Overview可以看到当前线程的状态信息。<br><img src="/2019/04/19/Android内存泄漏和检查——结合项目实例解析/Histogram.png" title="Histogram"></p>
+<ol start="4">
+<li>Leak Suspects，打开之后它会帮你分析一些可能泄漏的对象，再根据自己分析，结合以上工具，分析是否是真的泄漏点。</li>
+</ol>
+<ol start="5">
+<li>Dominator Tree，也是比较常用的工具，先简单描述一下支配树。</li>
+</ol>
+<img src="/2019/04/19/Android内存泄漏和检查——结合项目实例解析/引用关系与支配树.png" title="引用关系与支配树">
+<p>支配树描述了对象实例间的支配关系，在对象引用图中，所有经过B的路径都经过A，那么A则支配B。<br>看一下官方的一个例子，左边是对象引用图，右边是其对应的支配树。</p>
+<ul>
+<li>对象A和B由根对象直接支配</li>
+<li>经过对象C的路径可以经过A和B，则C也由根对象直接支配</li>
+<li>所有经过H的路径都经过C，则H由C支配</li>
+<li>支配树中顶点A的子树，则为对象A的深堆</li>
+</ul>
+<p>以此类推，可以从左边得到右边的支配图，由支配图可以更加直观看到对象的深堆（Retained Heap）和内存释放链。如果依赖树中出现了不该出现的对象，基本可以认为其发生了内存泄漏，同样可以右键，Merge Shortest Paths to GC Roots，查看其强引用链。依赖树中的大对象常常也是观察疑似内存泄漏的点，值得仔细排查。</p>
+<h3 id="五、项目实例解析"><a href="#五、项目实例解析" class="headerlink" title="五、项目实例解析"></a>五、项目实例解析</h3><h4 id="例一："><a href="#例一：" class="headerlink" title="例一："></a>例一：</h4><p>操作步骤：在某个界面重复退出重进，反复几次后，退出该界面，回到首页，等待一分钟左右，触发GC，dump下内存，用MAT打开。<br>检查方法：在Histogram中搜索该界面，发现有两个实例，Merge Shortest Paths to GC Roots，查看其强引用链，结果如下：<br><img src="/2019/04/19/Android内存泄漏和检查——结合项目实例解析/实例一，周星入口泄漏.png" title="实例一，周星入口泄漏"><br>结果分析：可以看到，该界面忍然有两个被强引用，都是WeekStarBanner被RxBus引用，即是注册了RxBus没有注销通知。<br>代码分析：检查到该View在构造函数注册RxBus的通知，而在onDetachedFromWindow注销通知，那么也就是说View创建了，初始化注册了通知，但是onDetachedFromWindow没有回掉，为什么？原来该View在Activity创建就会初始化，但是要网络请求，查是否开放才决定是否显示，这是如果查询结果没返回而退出界面，这个时候View没有attch to window，所以onDetachedFromWindow回调自然也不会掉用，导致泄漏。<br>解决方法：注册和注销，最好在View对应的生命周期调用，分别在onAttachedToWindow和onDetachedFromWindow注册和注销，可解决该问题。或者设计带有生命周期的注册器，自动在生命周期结束时自动注销。</p>
+<h4 id="例二："><a href="#例二：" class="headerlink" title="例二："></a>例二：</h4><p>操作步骤：打开APP，无其他操作，在首页等待一段后手动触发GC，并dump内存，用MAT打开。<br>检查方法：打开Dominator Tree，查看大内存对象及其支配对象，结果如下：<br><img src="/2019/04/19/Android内存泄漏和检查——结合项目实例解析/实例二，支配树.png" title="实例二，支配树"><br>结果分析：okhttp打开缓存会加大不少内存消耗<br>代码分析：检查代码，okhttp有多个实例使用缓存，某些地方并不需要缓存。<br>解决方法：不需要缓存的地方将缓存设置去除。</p>
+<h3 id="六、写在最后"><a href="#六、写在最后" class="headerlink" title="六、写在最后"></a>六、写在最后</h3><p>内存问题几乎是每个版本迭代需要关注的问题，可能一小的泄漏点就会导致崩溃，卡顿，ANR等各种问题，建议在版本测试周期或者灰度之前需要做一次内存检查，保证版本质量。MAT基本可以满足内存的检查要求，基本上你能想到的功能它都有提供，更多细节本文章不再赘述，可参考官方文档或网上资料。</p>
+<h3 id="PS"><a href="#PS" class="headerlink" title="PS:"></a>PS:</h3><p><a href="https://help.eclipse.org/luna/index.jsp?" target="_blank" rel="noopener">官方文档传送门</a></p>
+<h3 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h3><ol>
+<li><a href="https://segmentfault.com/a/1190000006884310" target="_blank" rel="noopener">【腾讯Bugly干货分享】Android内存泄漏的简单检查与分析方法</a></li>
+<li><a href="http://www.eclipsesource.com/blogs/2013/01/21/10-tips-for-using-the-eclipse-memory-analyzer/" target="_blank" rel="noopener">10 Tips for using the Eclipse Memory Analyzer</a></li>
+<li><a href="http://blog.nimbledroid.com/2016/05/23/memory-leaks.html" target="_blank" rel="noopener">Eight Ways Your Android App Can Leak Memory</a></li>
+</ol>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/内存泄漏/" rel="tag"># 内存泄漏</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/04/19/崩溃笔记——彻底消除多线程操作数组崩溃/" rel="next" title="崩溃笔记——彻底消除多线程操作数组崩溃">
+                <i class="fa fa-chevron-left"></i> 崩溃笔记——彻底消除多线程操作数组崩溃
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/avatar.png" alt="Rigar Su">
+            
+              <p class="site-author-name" itemprop="name">Rigar Su</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">2</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">2</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">2</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/RigarSu" target="_blank" title="Github">
+                      
+                        <i class="fa fa-fw fa-globe"></i>Github</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#一、什么是内存泄漏？"><span class="nav-number">2.</span> <span class="nav-text">一、什么是内存泄漏？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#二、Android常见的内存泄漏"><span class="nav-number">3.</span> <span class="nav-text">二、Android常见的内存泄漏</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#三、内存泄漏的检查"><span class="nav-number">4.</span> <span class="nav-text">三、内存泄漏的检查</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#四、如何使用Memory-Analyzer-Tool（MAT）检查内存？"><span class="nav-number">5.</span> <span class="nav-text">四、如何使用Memory Analyzer Tool（MAT）检查内存？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#五、项目实例解析"><span class="nav-number">6.</span> <span class="nav-text">五、项目实例解析</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#例一："><span class="nav-number">6.1.</span> <span class="nav-text">例一：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#例二："><span class="nav-number">6.2.</span> <span class="nav-text">例二：</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#六、写在最后"><span class="nav-number">7.</span> <span class="nav-text">六、写在最后</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#PS"><span class="nav-number">8.</span> <span class="nav-text">PS:</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#参考文献"><span class="nav-number">9.</span> <span class="nav-text">参考文献</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Rigar Su</span>
+<!--
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Muse</a> v5.1.4</div>
+
+
+
+-->
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </div></footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
